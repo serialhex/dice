@@ -37,7 +37,16 @@ rollNumProb d p = let n = numDice d
                       lk = [0..(((p - n) `div` s))]
                   in (1 / (fromIntegral s^n )) * (fromIntegral $ sum $ map (\k -> (-1)^k * (combination n k) * (combination (p - s*k - 1) (n-1))) lk)
 
-rollLTNum d p = undefined
+rollGTNum :: Dice -> Integer -> Double
+rollGTNum d p = 1 - rollLTNum d p
+
+rollLTNum :: Dice -> Integer -> Double
+rollLTNum d p
+        | p < l     = 0
+        | p >= g    = 1.0
+        | otherwise = (rollNumProb d p) + rollLTNum d (p-1)
+        where l = numDice d     -- least roll on nDx is n :P
+              g = (numDice d) * (numSides d)
 
 -- test stuff
 
