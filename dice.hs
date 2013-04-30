@@ -1,7 +1,9 @@
 -- awesome dice explorer stuff
 
-module Dice where
+--module Dice where
+module Main where
 import Data.List
+import Data.Ratio
 
 -- a Die has an integral number of sides...
 type Die = Integer
@@ -16,10 +18,16 @@ type DiceBag = [Dice]
 
 -- i like doubles, cause they're double the precicion!!  :P
 diceMean :: Dice -> Double
-diceMean d = 0.5 * fromIntegral ((1 + numSides d) * numDice d)
+diceMean d = fromRational $ diceMeanR d
+
+diceMeanR :: Dice -> Rational
+diceMeanR d = (1 % 2) * fromIntegral ((1 + numSides d) * numDice d)
 
 diceVariance :: Dice -> Double
-diceVariance d = fromIntegral (((numSides d) ^ 2 - 1 ) * (numDice d)) / 12
+diceVariance d = fromRational $ diceVarianceR d
+
+diceVarianceR :: Dice -> Rational
+diceVarianceR d = (((numSides d) ^ 2 - 1 ) * (numDice d)) % 12
 
 diceMean' :: DiceBag -> Double
 diceMean' (d:dx)  = diceMean d + diceMean' dx
@@ -37,25 +45,40 @@ diceVariance' :: DiceBag -> Double
 diceVariance' (d:ds)  = diceVariance d + diceVariance' ds
 diceVariance' []      = 0
 
+-----------------------------------------------------------
+
 -- algo stolen from: http://mathworld.wolfram.com/Dice.html
 -- and maybe some: http://en.wikipedia.org/wiki/Dice#Probability
 rollNumProb :: Dice -> Integer -> Double
-rollNumProb d r = let n = numDice d
-                      s = numSides d
-                      lk = [0..(((r - n) `div` s))]
-                  in (1 / (fromIntegral s^n )) * (fromIntegral $ sum $ map (\k -> (-1)^k * (combination n k) * (combination (r - s*k - 1) (n-1))) lk)
-                  -- oh and i slaved over that ^ there...  for *HOURS*!!! it wasn't easy.
+rollNumProb d r = fromRational $ rollNumProbR d r
+
+rollNumProbR :: Dice -> Integer -> Rational
+rollNumProbR d r =  let n = numDice d
+                        s = numSides d
+                        lk = [0..(((r - n) `div` s))]
+                    in (1 % (s^n)) * (fromIntegral
+                          $ sum
+                          $ map (\k -> (-1)^k * (combination n k) * (combination (r - s*k - 1) (n-1))) lk)
+                    -- oh and i slaved over that ^ there...  for *HOURS*!!! it wasn't easy.
 
 rollGTNum :: Dice -> Integer -> Double
 rollGTNum d r = 1 - rollLTNum d r
 
+rollGTNumR :: Dice -> Integer -> Rational
+rollGTNumR d r = 1 - rollLTNumR d r
+
 rollLTNum :: Dice -> Integer -> Double
-rollLTNum d r
-        | r < l     = 0.0
-        | r >= g    = 1.0
-        | otherwise = (rollNumProb d r) + rollLTNum d (r-1)
+rollLTNum d r = fromRational $ rollLTNumR d r
+
+rollLTNumR :: Dice -> Integer -> Rational
+rollLTNumR d r
+        | r < l     = 0 % 1
+        | r >= g    = 1 % 1
+        | otherwise = (rollNumProbR d r) + rollLTNumR d (r-1)
         where l = numDice d     -- least roll on nDx is n :P
               g = (numDice d) * (numSides d)
+
+-----------------------------------------------------------
 
 -- find if 2 dice have the same number of sides.
 sidesEQ :: Dice -> Dice -> Bool
@@ -66,7 +89,7 @@ sidesEQ a b = (numSides a) == (numSides b)
 --      where total d n (l:lx) =  if sidesEQ d l
 --                                then total d (n + numDice l) lx
 --                                else total d n lx
---            total d n []     =  
+--            total d n []     =
 
 -- test stuff
 
@@ -82,7 +105,9 @@ x = Dice 5 6
 y = Dice 6 12
 z = Dice 7 20
 
---main = putStrLn "Hello World"
+hero = Dice 3 6
+
+main = putStrLn $ show $ rollNumProb (Dice 5000 6) 17500
 
 
 
